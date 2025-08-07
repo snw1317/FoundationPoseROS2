@@ -17,6 +17,22 @@ The main advantages to the previous repositories and [isaac_ros_foundationpose](
 
 Furthermore, it provides an interactive GUI for object model-to-mask assignment for end-to-end multi-pose estimation and tracking.
 
+## Docker
+
+Build the image and run it with GPU acceleration, host networking and X11 forwarding:
+
+```bash
+docker build -t foundationpose:latest .
+
+docker run -it --rm \
+  --gpus all \
+  --net=host \
+  --privileged \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  foundationpose:latest
+```
+
 ## Prerequisites
 
 - **Ubuntu (20/22)**
