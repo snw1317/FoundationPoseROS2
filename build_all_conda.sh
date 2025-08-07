@@ -4,9 +4,14 @@ set -e
 PROJ_ROOT=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # Install dependencies
-pip install torchvision==0.16.0+cu121 torchaudio==2.1.0 torch==2.1.0+cu121 --index-url https://download.pytorch.org/whl/cu121
-pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
-python -m pip install -r requirements.txt
+python3 -m pip install --no-cache-dir \
+    torchvision==0.16.0+cu121 \
+    torchaudio==2.1.0 \
+    torch==2.1.0+cu121 \
+    --index-url https://download.pytorch.org/whl/cu121
+python3 -m pip install --no-cache-dir \
+    "git+https://github.com/facebookresearch/pytorch3d.git@stable"
+python3 -m pip install --no-cache-dir -r requirements.txt
 
 # Clone source repository of FoundationPose
 git clone https://github.com/NVlabs/FoundationPose.git
@@ -19,20 +24,20 @@ gdown --folder https://drive.google.com/drive/folders/12Te_3TELLes5cim1d7F7EBTwU
 cd ${PROJ_ROOT}/FoundationPose && git clone https://github.com/pybind/pybind11 && \
     cd pybind11 && git checkout v2.10.0 && \
     mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND11_INSTALL=ON -DPYBIND11_TEST=OFF && \
-    make -j6 && make install
+    make -j"$(nproc)" && make install
 
 # Install Eigen
 cd ${PROJ_ROOT}/FoundationPose && wget https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz && \
-    tar xvzf ./eigen-3.4.0.tar.gz && rm ./eigen-3.4.0.tar.gz && \
+    tar xvzf eigen-3.4.0.tar.gz && rm eigen-3.4.0.tar.gz && \
     cd eigen-3.4.0 && \
     mkdir build && \
     cd build && \
     cmake .. && \
-    make install
+    make -j"$(nproc)" install
 
 # Clone and install nvdiffrast
 cd ${PROJ_ROOT}/FoundationPose && git clone https://github.com/NVlabs/nvdiffrast && \
-    cd nvdiffrast && pip install .
+    cd nvdiffrast && python3 -m pip install .
 
 # Install mycpp
 cd ${PROJ_ROOT}/FoundationPose/mycpp/ && \

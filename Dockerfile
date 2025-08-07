@@ -40,7 +40,8 @@ COPY . /app
 RUN chmod +x build_all_conda.sh && sed -i 's/\r$//' build_all_conda.sh && ./build_all_conda.sh
 
 # Expose FoundationPose to Python
-ENV PYTHONPATH=/app/FoundationPose:$PYTHONPATH
+ARG PYTHONPATH
+ENV PYTHONPATH=/app/FoundationPose:${PYTHONPATH}
 
 # Default entrypoint
 ENTRYPOINT ["/bin/bash", "-c", "source /opt/ros/humble/setup.bash && python3 foundationpose_ros_multi.py"]
