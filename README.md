@@ -26,6 +26,41 @@ Furthermore, it provides an interactive GUI for object model-to-mask assignment 
 - **Intel RealSense Camera**
 
 
+### Host prerequisites for GPU (Linux)
+
+You must have the NVIDIA driver and the **NVIDIA Container Toolkit** installed on the host so Docker can access your GPU.
+
+- Install guide: NVIDIA Container Toolkit (official)  \
+  https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+
+
+### Docker (CUDA 12.1 + ROS 2 Humble)
+
+Build:
+```bash
+docker build -t foundationpose_ros2:cu121 .
+```
+Run (GPU + X11 GUI + RealSense USB):
+```bash
+xhost +local:root
+docker run -it --rm --gpus all \
+  -e DISPLAY -e QT_X11_NO_MITSHM=1 \
+  -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+  --device /dev/dri --device /dev/bus/usb:/dev/bus/usb \
+  --network host \
+  --name fpose_ros2 foundationpose_ros2:cu121
+```
+Inside container:
+```bash
+fp_get_weights.sh
+source /opt/ros/humble/setup.bash
+ros2 launch realsense2_camera rs_launch.py enable_rgbd:=true enable_sync:=true align_depth.enable:=true enable_color:=true enable_depth:=true pointcloud.enable:=true
+# new shell
+source /opt/ros/humble/setup.bash
+cd /workspace/FoundationPoseROS2
+python3 foundationpose_ros_multi.py
+```
+
 ## Dependencies
 
 ```bash

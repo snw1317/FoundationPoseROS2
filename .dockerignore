@@ -1,0 +1,13 @@
+.git
+.gitignore
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.mypy_cache
+**/.pytest_cache
+**/.DS_Store
+**/*.bag
+**/*.db3
+assets/
+FoundationPose/weights/
