@@ -36,9 +36,8 @@ pytest==8.2.2
 pytinyrenderer==0.0.14
 pytorch_lightning==2.4.0
 PyYAML==6.0.2
-PyYAML==6.0.2
-Requests==2.32.3	
-ruamel.base==1.0.0
+Requests==2.32.3
+ruamel.yaml==0.17.35
 ruptures==1.1.9
 scikit_learn==1.5.2
 scipy==1.14.1

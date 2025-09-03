@@ -82,8 +82,8 @@ RUN cd /workspace/FoundationPose/mycpp && \
 
 # bundlesdf/mycuda (CUDA extension)
 # Force explicit arch list so PyTorch's extension builder doesn't infer from GPU (none during build)
-# Default to Pascal (GTX 1060 is compute 6.1). Override with --build-arg TORCH_CUDA_ARCH_LIST="X.Y;..." if needed.
-ARG TORCH_CUDA_ARCH_LIST="6.1"
+# Default covers Pascal through Ada (GTX 10xx to RTX 40xx). Override with --build-arg TORCH_CUDA_ARCH_LIST="X.Y;..." if needed.
+ARG TORCH_CUDA_ARCH_LIST="6.1;7.5;8.0;8.6;8.9"
 ENV TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST}
 RUN cd /workspace/FoundationPose/bundlesdf/mycuda && \
     sed -i "s/-std=c++14/-std=c++17/g" setup.py || true && \
@@ -94,6 +94,13 @@ RUN cd /workspace/FoundationPose/bundlesdf/mycuda && \
 COPY _misc/fp_get_weights.sh /usr/local/bin/fp_get_weights.sh
 COPY _misc/run_foundationpose.sh /usr/local/bin/run_foundationpose.sh
 RUN chmod +x /usr/local/bin/fp_get_weights.sh /usr/local/bin/run_foundationpose.sh
+
+# Fetch pretrained weights during image build so that runtime does not need to
+# download them.  The weights are stored both in the location expected by
+# FoundationPose and mirrored into the repository directory for convenience.
+RUN fp_get_weights.sh \
+ && mkdir -p /workspace/FoundationPoseROS2/weights \
+ && cp -r /workspace/FoundationPose/weights/* /workspace/FoundationPoseROS2/weights/
 
 # Let Python find FoundationPose modules (nvdiffrast is installed site-wide)
 # Keep it simple to avoid undefined-var lint warnings during build

@@ -20,6 +20,13 @@ if [ -f "/opt/ros/${ROS_DISTRO}/setup.bash" ]; then
   set -u
 fi
 
+# Ensure a single shared weights directory. Defaults to the repository's
+# weights folder, which is typically mounted from the host. Mirror it to the
+# location expected by FoundationPose.
+export WEIGHTS_ROOT="${WEIGHTS_ROOT:-/workspace/FoundationPoseROS2/weights}"
+mkdir -p "${WEIGHTS_ROOT}"
+ln -sfn "${WEIGHTS_ROOT}" /workspace/FoundationPose/weights
+
 # Attempt to fetch weights unless disabled
 if [ "${FP_AUTO_WEIGHTS:-1}" = "1" ]; then
   if command -v fp_get_weights.sh >/dev/null 2>&1; then
