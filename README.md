@@ -50,6 +50,7 @@ docker run -it --rm --gpus all \
   -e DISPLAY -e QT_X11_NO_MITSHM=1 \
   -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
   --device /dev/dri --device /dev/bus/usb:/dev/bus/usb \
+  $(for d in /dev/video*; do echo --device=$d; done) \
   --network host \
   --name fpose_ros2 foundationpose_ros2:cu121
 ```
@@ -85,6 +86,7 @@ docker run -it --rm --gpus all \
   -e DISPLAY -e QT_X11_NO_MITSHM=1 \
   -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
   --device /dev/dri --device /dev/bus/usb:/dev/bus/usb \
+  $(for d in /dev/video*; do echo --device=$d; done) \
   --network host \
   --entrypoint bash \
   --name fpose_ros2 foundationpose_ros2:cu121
