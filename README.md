@@ -54,7 +54,7 @@ docker run -it --rm --gpus all \
   --network host \
   --name fpose_ros2 foundationpose_ros2:cu121
 ```
-This auto-downloads FoundationPose weights, launches the RealSense driver, and starts `foundationpose_ros_multi.py` inside the container.
+This auto-downloads FoundationPose weights (cached in the repo's `weights/` directory), launches the RealSense driver, and starts `foundationpose_ros_multi.py` inside the container.
 
 Run with rosbag instead of camera:
 ```bash
