@@ -95,6 +95,15 @@ COPY _misc/fp_get_weights.sh /usr/local/bin/fp_get_weights.sh
 COPY _misc/run_foundationpose.sh /usr/local/bin/run_foundationpose.sh
 RUN chmod +x /usr/local/bin/fp_get_weights.sh /usr/local/bin/run_foundationpose.sh
 
+# Optional: prefetch weights during build with --build-arg FP_FETCH_WEIGHTS=1
+ARG FP_FETCH_WEIGHTS=0
+RUN if [ "${FP_FETCH_WEIGHTS}" = "1" ]; then \
+      echo "Prefetching FoundationPose weights at build time" && \
+      fp_get_weights.sh || true; \
+    else \
+      echo "Skipping weight prefetch (FP_FETCH_WEIGHTS=${FP_FETCH_WEIGHTS})"; \
+    fi
+
 # Let Python find FoundationPose modules (nvdiffrast is installed site-wide)
 # Keep it simple to avoid undefined-var lint warnings during build
 ENV PYTHONPATH=/workspace/FoundationPose

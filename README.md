@@ -38,7 +38,11 @@ You must have the NVIDIA driver and the **NVIDIA Container Toolkit** installed o
 
 Build image:
 ```bash
+# Default build (weights downloaded the first time the container runs)
 docker build -t foundationpose_ros2:cu121 .
+
+# Optional: pre-fetch FoundationPose weights during the image build
+docker build -t foundationpose_ros2:cu121 --build-arg FP_FETCH_WEIGHTS=1 .
 ```
 
 Run with RealSense camera (default mode):
@@ -53,7 +57,13 @@ docker run -it --rm --gpus all \
   --network host \
   --name fpose_ros2 foundationpose_ros2:cu121
 ```
-This auto-downloads FoundationPose weights, launches the RealSense driver, and starts `foundationpose_ros_multi.py` inside the container.
+This launches the RealSense driver and starts `foundationpose_ros_multi.py` inside the container.
+During startup the entrypoint checks `/workspace/FoundationPose/weights`; missing folders are downloaded automatically (skip with `FP_AUTO_WEIGHTS=0`).
+
+When you are done sharing the display, revoke access with:
+```bash
+xhost -local:root
+```
 
 Run with rosbag instead of camera:
 ```bash
