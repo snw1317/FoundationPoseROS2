@@ -50,7 +50,7 @@ Run with RealSense camera (default mode):
 # Allow X11 for GUI windows
 xhost +local:root
 
-docker run -it --rm --gpus all \
+docker run -it --rm --privileged --gpus all \
   -e DISPLAY -e QT_X11_NO_MITSHM=1 \
   -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
   --device /dev/dri --device /dev/bus/usb:/dev/bus/usb \
