@@ -58,7 +58,7 @@ docker run -it --rm --privileged --gpus all \
   --name fpose_ros2 foundationpose_ros2:cu121
 ```
 This launches the RealSense driver and starts `foundationpose_ros_multi.py` inside the container.
-During startup the entrypoint checks `/workspace/FoundationPose/weights`; missing folders are downloaded automatically (skip with `FP_AUTO_WEIGHTS=0`).
+During startup the entrypoint ensures the FoundationPose weights exist. When the repository is bind-mounted, downloads are saved to `/workspace/FoundationPoseROS2/FoundationPose/weights` (symlinked into `/workspace/FoundationPose/weights` for compatibility). Override the location by setting `FP_WEIGHTS_ROOT=/path/in/container`. Skip the download entirely with `FP_AUTO_WEIGHTS=0`.
 
 When you are done sharing the display, revoke access with:
 ```bash

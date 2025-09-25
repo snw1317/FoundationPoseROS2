@@ -11,6 +11,16 @@ set -euo pipefail
 export QT_X11_NO_MITSHM="${QT_X11_NO_MITSHM:-1}"
 export ROS_DISTRO="${ROS_DISTRO:-humble}"
 
+# Select a persistent weights directory when the repo is bind-mounted
+if [ -z "${FP_WEIGHTS_ROOT:-}" ]; then
+  if [ -w "/workspace/FoundationPoseROS2" ]; then
+    mkdir -p /workspace/FoundationPoseROS2/FoundationPose >/dev/null 2>&1 || true
+    export FP_WEIGHTS_ROOT="/workspace/FoundationPoseROS2/FoundationPose/weights"
+  else
+    export FP_WEIGHTS_ROOT="/workspace/FoundationPose/weights"
+  fi
+fi
+
 # Source ROS 2 without nounset to avoid unbound vars (e.g., AMENT_TRACE_SETUP_FILES)
 if [ -f "/opt/ros/${ROS_DISTRO}/setup.bash" ]; then
   set +u
