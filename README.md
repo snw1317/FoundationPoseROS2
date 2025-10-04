@@ -26,6 +26,80 @@ Furthermore, it provides an interactive GUI for object model-to-mask assignment 
 - **Intel RealSense Camera**
 
 
+### Host prerequisites for GPU (Linux)
+
+You must have the NVIDIA driver and the **NVIDIA Container Toolkit** installed on the host so Docker can access your GPU.
+
+- Install guide: NVIDIA Container Toolkit (official)  \
+  https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
+
+
+### Docker (CUDA 12.1 + ROS 2 Humble)
+
+Build image:
+```bash
+# Default build (weights downloaded the first time the container runs)
+docker build -t foundationpose_ros2:cu121 .
+
+# Optional: pre-fetch FoundationPose weights during the image build
+docker build -t foundationpose_ros2:cu121 --build-arg FP_FETCH_WEIGHTS=1 .
+```
+
+Run with RealSense camera (default mode):
+```bash
+# Allow X11 for GUI windows
+xhost +local:root
+
+docker run -it --rm --privileged --gpus all \
+  -e DISPLAY -e QT_X11_NO_MITSHM=1 \
+  -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+  --device /dev/dri --device /dev/bus/usb:/dev/bus/usb \
+  --network host \
+  --name fpose_ros2 foundationpose_ros2:cu121
+```
+This launches the RealSense driver and starts `foundationpose_ros_multi.py` inside the container.
+During startup the entrypoint ensures the FoundationPose weights exist. When the repository is bind-mounted, downloads are saved to `/workspace/FoundationPoseROS2/FoundationPose/weights` (symlinked into `/workspace/FoundationPose/weights` for compatibility). Override the location by setting `FP_WEIGHTS_ROOT=/path/in/container`. Skip the download entirely with `FP_AUTO_WEIGHTS=0`.
+
+When you are done sharing the display, revoke access with:
+```bash
+xhost -local:root
+```
+
+Run with rosbag instead of camera:
+```bash
+xhost +local:root
+docker run -it --rm --gpus all \
+  -e DISPLAY -e QT_X11_NO_MITSHM=1 \
+  -e FP_MODE=rosbag \
+  -e FP_ROSBAG_PATH=/data/cube_demo_data_rosbag2.db3 \
+  -e FP_ROSBAG_ARGS='--loop' \
+  -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+  -v /path/to/rosbag:/data:ro \
+  --network host \
+  --name fpose_ros2 foundationpose_ros2:cu121
+```
+Notes:
+- `FP_ROSBAG_PATH` may be a directory (rosbag2 folder) or a `.db3` file path inside the container.
+- Add `--device /dev/dri` to enable OpenGL and GUI.
+
+Optional environment variables:
+- `FP_AUTO_WEIGHTS=0`: skip auto weight download at startup.
+- `FP_CAMERA_WAIT=8`: wait longer (seconds) before app starts.
+- `FP_MODE=camera|rosbag`: select data source (default `camera`).
+- `FP_ROSBAG_PATH=/data/your.bag.db3`: bag path in container when using `rosbag`.
+- `FP_ROSBAG_ARGS='--loop --clock 50'`: extra rosbag2 play flags.
+
+Open an interactive shell instead of autostarting:
+```bash
+docker run -it --rm --gpus all \
+  -e DISPLAY -e QT_X11_NO_MITSHM=1 \
+  -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+  --device /dev/dri --device /dev/bus/usb:/dev/bus/usb \
+  --network host \
+  --entrypoint bash \
+  --name fpose_ros2 foundationpose_ros2:cu121
+```
+
 ## Dependencies
 
 ```bash
