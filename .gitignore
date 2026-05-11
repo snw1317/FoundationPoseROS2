@@ -1,0 +1,7 @@
+.fp_cache/
+FoundationPose
+rosbags/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+masks.png

@@ -25,6 +25,115 @@ Furthermore, it provides an interactive GUI for object model-to-mask assignment 
 - **CUDA 12.x**
 - **Intel RealSense Camera**
 
+## Docker (Recommended)
+
+The Docker workflow mirrors the working conda setup while keeping the image reasonably small. The image includes CUDA 12.1 development tools, ROS2 Humble, RealSense ROS packages, and the system libraries needed for Tk/OpenCV/OpenGL windows. Large and frequently changing assets are kept out of image layers and are bootstrapped into a host-mounted cache at runtime.
+
+### Host prerequisites
+
+- Docker Engine + Docker Compose plugin
+- NVIDIA Container Toolkit for GPU access in the `app` service
+- X11 access for Tk/OpenCV windows
+- Intel RealSense camera visible on the host
+- RealSense udev rules installed on the host so the non-root container user can read the USB device
+
+For WSL2, attach the RealSense USB device to the Linux distro first, then confirm it appears under `/dev/bus/usb` before starting the container.
+
+### One-time host setup
+
+```bash
+# In repo root
+mkdir -p .fp_cache rosbags
+export LOCAL_UID=$(id -u)
+export LOCAL_GID=$(id -g)
+
+# Allow local docker containers to access your X server
+xhost +local:docker
+```
+
+### Build
+
+```bash
+docker compose build
+```
+
+### Run with a RealSense camera
+
+```bash
+# Starts the RealSense ROS node and the FoundationPoseROS2 app.
+docker compose --profile camera up realsense app
+```
+
+On first startup, the container bootstraps dependencies into `./.fp_cache`:
+- Python virtual environment
+- `FoundationPose` clone
+- FoundationPose weights
+- SAM / torch / pip caches
+- compiled extension artifacts
+
+The first `app` run can take a while because it installs the Python stack and compiles CUDA extensions. Subsequent startups reuse the same cache and skip the heavy setup.
+
+### Run only the camera node
+
+```bash
+docker compose --profile camera up realsense
+```
+
+The `realsense` service intentionally skips the FoundationPose bootstrap, so it is quick to use for camera/topic checks.
+
+### Run rosbag player (profile)
+
+Put your rosbag under `./rosbags` or set `ROSBAG_DIR` and `ROSBAG_PATH`.
+
+```bash
+export ROSBAG_DIR=./rosbags
+export ROSBAG_PATH=/rosbags/cube_demo_data_rosbag2
+docker compose --profile rosbag up rosbag app
+```
+
+The `rosbag` service also skips the FoundationPose bootstrap. The `app` service performs the bootstrap when needed.
+
+### Useful modes
+
+```bash
+# Force full re-bootstrap (for dependency updates)
+FP_BOOTSTRAP=force docker compose up app
+
+# Skip bootstrap and run directly
+FP_BOOTSTRAP=skip docker compose up app
+
+# Open a shell in the app environment
+docker compose run --rm app shell
+```
+
+### Cache layout
+
+All persistent data lives in `./.fp_cache` (host side), including:
+- `venv/` (persistent Python environment)
+- `src/FoundationPose/`
+- `cache/` (pip/torch/ultralytics/huggingface cache)
+- `bootstrap/bootstrap.version` (bootstrap sentinel)
+
+Delete `./.fp_cache/bootstrap/bootstrap.version` or run with `FP_BOOTSTRAP=force` if you need to rebuild the cached Python/FoundationPose environment.
+
+### Validate the container setup
+
+```bash
+# 1) Build succeeds without baking model weights into the image
+docker compose build
+
+# 2) Verify the RealSense node can see the camera
+docker compose --profile camera up realsense
+
+# 3) First app run performs bootstrap into .fp_cache
+docker compose up app
+
+# 4) Warm restart should skip heavy bootstrap steps
+docker compose up app
+```
+
+If the camera is not detected, check that `lsusb` sees the RealSense device on the host, that the host udev rules are installed, and that `/dev/bus/usb` exists inside the `realsense` container.
+
 
 ## Dependencies
 
@@ -117,10 +226,10 @@ Once you've downloaded the rosbag file, navigate to the directory where it's loc
 
 ```bash
 # Play the downloaded rosbag
-source /opt/ros/<ROS_DISTRO>/setup.bash && ros2 bag play cube_demo_data_rosbag2/cube_demo_data_rosbag2.db3
+source /opt/ros/<ROS_DISTRO>/setup.bash && ros2 bag play cube_demo_data_rosbag2
 ```
 
-Replace `<path_to_your_rosbag_file>` with the path to the `.db3` file you downloaded.
+Replace `<path_to_your_rosbag_file>` with the path to the rosbag directory you downloaded.
 
 ### 3. Run FoundationPoseROS2
 

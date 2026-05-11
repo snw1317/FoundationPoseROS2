@@ -1,0 +1,58 @@
+x-common-environment: &common-environment
+  ROS_DISTRO: humble
+  FP_DATA_ROOT: /workspace_data
+  FP_BOOTSTRAP: ${FP_BOOTSTRAP:-auto}
+  DISPLAY: ${DISPLAY:-}
+  QT_X11_NO_MITSHM: "1"
+  NVIDIA_VISIBLE_DEVICES: all
+  NVIDIA_DRIVER_CAPABILITIES: all
+
+x-common-volumes: &common-volumes
+  - ./:/workspace:rw
+  - ./.fp_cache:/workspace_data:rw
+  - /tmp/.X11-unix:/tmp/.X11-unix:rw
+
+x-common-service: &common-service
+  build:
+    context: .
+    dockerfile: Dockerfile
+  image: foundationpose_ros2:humble-cu121
+  user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+  network_mode: host
+  ipc: host
+  init: true
+  environment: *common-environment
+
+services:
+  app:
+    <<: *common-service
+    container_name: foundationpose_app
+    command: ["app"]
+    gpus: all
+    volumes: *common-volumes
+
+  realsense:
+    <<: *common-service
+    container_name: foundationpose_realsense
+    command: ["realsense"]
+    profiles: ["camera"]
+    privileged: true
+    volumes:
+      - ./:/workspace:rw
+      - ./.fp_cache:/workspace_data:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - /dev/bus/usb:/dev/bus/usb:rw
+
+  rosbag:
+    <<: *common-service
+    container_name: foundationpose_rosbag
+    command: ["rosbag"]
+    profiles: ["rosbag"]
+    environment:
+      <<: *common-environment
+      ROSBAG_PATH: ${ROSBAG_PATH:-/rosbags/cube_demo_data_rosbag2}
+    volumes:
+      - ./:/workspace:rw
+      - ./.fp_cache:/workspace_data:rw
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${ROSBAG_DIR:-./rosbags}:/rosbags:rw
